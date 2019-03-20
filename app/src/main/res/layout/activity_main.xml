@@ -4,30 +4,47 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="18dp"
     android:orientation="vertical"
+    android:padding="18dp"
     tools:context=".MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30sp"
         android:layout_gravity="center_horizontal"
-        android:text="SignUp"/>
+        android:text="SignUp"
+        android:textSize="30sp" />
 
     <ImageView
         android:id="@+id/user_image"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:src="@mipmap/ic_launcher_round"
         android:layout_gravity="center_horizontal"
-        />
+        android:src="@mipmap/ic_launcher_round" />
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Uername" />
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Email" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Password" />
 
     <Button
         android:id="@+id/upload_img"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upload"/>
+        android:text="Upload" />
 
 
 </LinearLayout>

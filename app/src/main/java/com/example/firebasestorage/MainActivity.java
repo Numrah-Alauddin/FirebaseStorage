@@ -14,11 +14,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -35,10 +43,14 @@ public class MainActivity extends AppCompatActivity {
     Button upload;
     Uri image;
     Bitmap image_btm;
-
+    FirebaseAuth auth;
+    FirebaseUser user;
+    FirebaseDatabase database;
+    DatabaseReference databaseReference;
     FirebaseStorage firebaseStorage;
     StorageReference reference;
     ProgressDialog dialog;
+    EditText username, pass, email;
 
 
     @Override
@@ -60,13 +72,35 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                dialog.show();
-                uploadImage();
+                //dialog.show();
+
+                String emailText=email.getText().toString();
+                String nameText=username.getText().toString();
+                String passText=pass.getText().toString();
+                authUser(nameText,emailText,passText);
+                //uploadImage();
             }
         });
     }
 
-    private void uploadImage() {
+    private void authUser(final String nameText, final String emailText, final String passText) {
+
+        auth.createUserWithEmailAndPassword(emailText,passText).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+
+                if(task.isSuccessful()){
+
+                    reference = firebaseStorage.getReference("images/"+auth.getCurrentUser().getUid());
+                    uploadImage(nameText,emailText,passText);
+                }
+
+            }
+        });
+
+    }
+
+    private void uploadImage(final String name, final String email, final String pass) {
 
         BitmapDrawable drawable = (BitmapDrawable) user_img.getDrawable();
         Bitmap bitmap = drawable.getBitmap();
@@ -79,6 +113,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
+
+                reference.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            String image = task.getResult().toString();
+
+                            String uid=auth.getCurrentUser().getUid();
+                            saveData(name,email,pass,image,uid);
+                        }
+                    }
+                });
+
                 dialog.dismiss();
                 Toast.makeText(MainActivity.this, "Upload", Toast.LENGTH_SHORT).show();
 
@@ -87,8 +134,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
 
-                double progress=(100.0 * taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
-                dialog.setMessage((int)progress+ "% Uploaded");
+                double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                dialog.setMessage((int) progress + "% Uploaded");
 
 
             }
@@ -100,6 +147,14 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
                     }
                 });
+
+    }
+
+    private void saveData(String name, String email, String pass,String image,String uid) {
+
+        User user =new User(name,email,pass,image,uid);
+        databaseReference.child(uid).setValue(user);
+        startActivity(new Intent(this,ProfileActivity.class));
 
     }
 
@@ -155,16 +210,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-
+        username = findViewById(R.id.username);
+        email = findViewById(R.id.email);
+        pass = findViewById(R.id.password);
         user_img = findViewById(R.id.user_image);
         upload = findViewById(R.id.upload_img);
 
+        database=FirebaseDatabase.getInstance();
+        databaseReference=database.getReference("users");
         firebaseStorage = FirebaseStorage.getInstance();
-        reference = firebaseStorage.getReference("images/");
 
+        auth = FirebaseAuth.getInstance();
+        user = auth.getCurrentUser();
         dialog = new ProgressDialog(this);
         dialog.setTitle("Uploading");
         dialog.setMessage("Please Wait...");
+
+
 
     }
 }
